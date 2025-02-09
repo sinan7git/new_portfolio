@@ -1,7 +1,7 @@
 {
   "builds": [
     {
-      "src": "api/index.js",
+      "src": "functions/[[path]].js",
       "use": "@vercel/node"
     },
     {
@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/index.js"
+      "dest": "functions/[[path]].js"
     }
   ]
 }
