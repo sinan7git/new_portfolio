@@ -7,9 +7,9 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "build": "remix vite:build",
-    "dev": "remix vite:dev",
-    "start": "vercel dev",
+    "build": "remix build",
+    "dev": "remix dev",
+    "start": "remix-serve build",
     "postinstall": "node ./scripts/draco.cjs",
     "deploy": "vercel deploy --prod",
     "dev:storybook": "storybook dev -p 6006",
