@@ -9,7 +9,7 @@ import {
   useNavigation,
   useRouteError,
 } from '@remix-run/react';
-import { createCookieSessionStorage, json } from '@remix-run/cloudflare';
+import { createCookieSessionStorage, json } from '@remix-run/node';
 import { ThemeProvider, themeStyles } from '~/components/theme-provider';
 import GothamBook from '~/assets/fonts/gotham-book.woff2';
 import GothamMedium from '~/assets/fonts/gotham-medium.woff2';
@@ -46,49 +46,53 @@ export const links = () => [
   { rel: 'author', href: '/humans.txt', type: 'text/plain' },
 ];
 
-export const loader = async ({ request, context }) => {
+// Create session storage with a default secret for development
+const sessionStorage = createCookieSessionStorage({
+  cookie: {
+    name: '__session',
+    httpOnly: true,
+    maxAge: 604_800,
+    path: '/',
+    sameSite: 'lax',
+    // Use a development secret if no environment variable is set
+    secrets: ['dev-secret-key'],
+    secure: false, // Set to false for development
+  },
+});
+
+export const loader = async ({ request }) => {
   const { url } = request;
   const { pathname } = new URL(url);
-  const pathnameSliced = pathname.endsWith('/') ? pathname.slice(0, -1) : url;
+  const pathnameSliced = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
   const canonicalUrl = `${config.url}${pathnameSliced}`;
 
-  const { getSession, commitSession } = createCookieSessionStorage({
-    cookie: {
-      name: '__session',
-      httpOnly: true,
-      maxAge: 604_800,
-      path: '/',
-      sameSite: 'lax',
-      secrets: [context.cloudflare.env.SESSION_SECRET || ' '],
-      secure: true,
-    },
-  });
-
-  const session = await getSession(request.headers.get('Cookie'));
+  // Use sessionStorage.getSession to retrieve the session from the request cookies
+  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
   const theme = session.get('theme') || 'dark';
 
   return json(
     { canonicalUrl, theme },
     {
       headers: {
-        'Set-Cookie': await commitSession(session),
+        'Set-Cookie': await sessionStorage.commitSession(session),
       },
     }
   );
 };
 
+// Rest of your App component and ErrorBoundary remain the same
 export default function App() {
-  let { canonicalUrl, theme } = useLoaderData();
+  const { canonicalUrl, theme } = useLoaderData();
   const fetcher = useFetcher();
   const { state } = useNavigation();
 
-  if (fetcher.formData?.has('theme')) {
-    theme = fetcher.formData.get('theme');
-  }
+  const currentTheme = fetcher.formData?.has('theme') 
+    ? fetcher.formData.get('theme') 
+    : theme;
 
   function toggleTheme(newTheme) {
     fetcher.submit(
-      { theme: newTheme ? newTheme : theme === 'dark' ? 'light' : 'dark' },
+      { theme: newTheme || (currentTheme === 'dark' ? 'light' : 'dark') },
       { action: '/api/set-theme', method: 'post' }
     );
   }
@@ -105,19 +109,18 @@ export default function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Theme color doesn't support oklch so I'm hard coding these hexes for now */}
-        <meta name="theme-color" content={theme === 'dark' ? '#111' : '#F2F2F2'} />
+        <meta name="theme-color" content={currentTheme === 'dark' ? '#111' : '#F2F2F2'} />
         <meta
           name="color-scheme"
-          content={theme === 'light' ? 'light dark' : 'dark light'}
+          content={currentTheme === 'light' ? 'light dark' : 'dark light'}
         />
         <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
         <Meta />
         <Links />
         <link rel="canonical" href={canonicalUrl} />
       </head>
-      <body data-theme={theme}>
-        <ThemeProvider theme={theme} toggleTheme={toggleTheme}>
+      <body data-theme={currentTheme}>
+        <ThemeProvider theme={currentTheme} toggleTheme={toggleTheme}>
           <Progress />
           <VisuallyHidden showOnFocus as="a" className={styles.skip} href="#main-content">
             Skip to main content
