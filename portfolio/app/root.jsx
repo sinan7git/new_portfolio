@@ -11,8 +11,8 @@ import {
 } from '@remix-run/react';
 import { createCookieSessionStorage, json } from '@remix-run/node';
 import { ThemeProvider, themeStyles } from '~/components/theme-provider';
-import GothamBook from '../../assets/fonts/gotham-book.woff2';
-import GothamMedium from '../../assets/fonts/gotham-medium.woff2';
+import GothamBook from '../app/assets/fonts/gotham-book.woff2';
+import GothamMedium from '../app/assets/fonts/gotham-medium.woff2';
 import { useEffect } from 'react';
 import { Error } from '~/layouts/error';
 import { VisuallyHidden } from '~/components/visually-hidden';
