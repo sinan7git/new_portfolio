@@ -3,6 +3,6 @@ module.exports = {
   appDirectory: "app",
   assetsBuildDirectory: "public/build",
   publicPath: "/build/",
-  serverBuildPath: "build/index.js", // Build output here
-  serverBuildTarget: "vercel", // Ensures Vercel compatibility
+  serverBuildPath: "api/index.js", // Output will be in the api folder
+  serverBuildTarget: "vercel",
 };
